@@ -9,7 +9,12 @@ requires-python = ">=3.10"
 license = {file = "LICENSE"}
 description = "Package that predicts the Rf values for silica thin-layer-chromatographies (TLCs)"
 dependencies = [
-    # "rdkit",
+    "pandas",
+    "rdkit",
+    "Sphinx",
+    "numpy",
+    "rdkit"
+
 ]
 authors = [
     {name = "Milena Wiegand", email = "milena.wiegand@epfl.ch"}
