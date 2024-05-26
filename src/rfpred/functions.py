@@ -2,13 +2,12 @@ import pandas as pd
 import numpy as np
 import rdkit
 from rdkit import Chem
-import os
+from rdkit.Chem import MACCSkeys
+from rdkit.Chem import Descriptors
 import re
-import json
 
 
-
-def extract_rows_with_rf(Dataframe: pd.DataFrame):
+def extract_rows_with_rf(Dataframe: pd.DataFrame, column_name: str):
     """Function that extracts rows with Rf values from a dataframe and returns a new dataframe containing only these rows. 
 
     Args:
@@ -25,7 +24,7 @@ def extract_rows_with_rf(Dataframe: pd.DataFrame):
     
     # Search for rows with Rf values in the paragraphText column
     for index, row in df.iterrows():
-        checkRf = re.findall(Rf_check, row['paragraphText'])
+        checkRf = re.findall(Rf_check, row[column_name])
 
         if not checkRf:
             rows_to_drop.append(index)
@@ -235,4 +234,76 @@ def are_enantiomers(smi1, smi2):
     
     # If none of the above conditions were met, return False
     return False, None
+
+
+def get_maccs(smiles):
+    """
+    Generate MACCS keys for a molecule from its SMILES string.
     
+    Args:
+        smiles (str): The SMILES string of the molecule.
+        
+    Returns:
+        np.array: A numpy array of the MACCS keys.
+    """
+    maccs = MACCSkeys.GenMACCSKeys(Chem.MolFromSmiles(smiles))
+    return np.array([int(x) for x in list(maccs.ToBitString())])  # Convert MACCS keys to numpy array
+
+
+def get_solvent_features(solvent_A, solvent_B, percent_A, solvents):
+    """
+    Generate solvent features for a given solvent combination.
+    
+    Args:
+        solvent_A (str): The first solvent.
+        solvent_B (str): The second solvent.
+        percent_A (float): The percentage of solvent A.
+        solvents (list): The list of all possible solvents.
+        
+    Returns:
+        np.array: A numpy array of the solvent features.
+    """
+    percent_B = 100 - percent_A
+    solvent_feature = np.zeros(len(solvents))
+    if solvent_A in solvents:
+        solvent_A_index = solvents.index(solvent_A)
+        solvent_feature[solvent_A_index] = percent_A
+    if solvent_B in solvents:
+        solvent_B_index = solvents.index(solvent_B)
+        solvent_feature[solvent_B_index] = percent_B
+    return solvent_feature
+
+def get_rdkit_descriptors(smiles):
+    """
+    Generate RDKit descriptors for a molecule from its SMILES string.
+    
+    Args:
+        smiles (str): The SMILES string of the molecule.
+        
+    Returns:
+        np.array: A numpy array of the RDKit descriptors.
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    return np.array([Descriptors.MolWt(mol), Descriptors.MolLogP(mol),
+                     Descriptors.NumHDonors(mol), Descriptors.NumHAcceptors(mol)])
+
+    
+def process_input(smiles, solvent_A, solvent_B, percent_A):
+    """
+    Process the input data into a feature matrix.
+    
+    Args:
+        smiles (str): The SMILES string of the molecule.
+        solvent_A (str): The first solvent.
+        solvent_B (str): The second solvent.
+        percent_A (float): The percentage of solvent A.
+        
+    Returns:
+        np.array: The feature matrix.
+    """
+    solvents = ['DCM', 'MeOH', 'MeCN', 'Toluene', 'Hexane', 'Chloroform', 'Acetone', 'EtOH', 'diethyl ether', 'heptane', 'petroleum ether (2-methylpentane)', 'triethylamine', 'EtOAc', 'THF']
+    maccs = get_maccs(smiles)
+    solvent_features = get_solvent_features(solvent_A, solvent_B, percent_A, solvents)
+    rdkit_descriptors = get_rdkit_descriptors(smiles)
+    X = np.concatenate([maccs, rdkit_descriptors, solvent_features])
+    return X
