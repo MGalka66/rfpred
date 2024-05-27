@@ -74,7 +74,7 @@ def get_solvents(Dataframe: pd.DataFrame):
 
 
 
-def convert_solvents(Dataframe: pd.DataFrame):
+def convert_solvents(Dataframe: pd.DataFrame, column_solvent_A: str, column_solvent_B: str):
     """Converts the solvent names in the dataframe to a standardized form.
 
     Args:
@@ -91,7 +91,7 @@ def convert_solvents(Dataframe: pd.DataFrame):
     size_pre_conversion = Dataframe.shape[0]  # get the size of the dataframe
     
     for index, row in Dataframe.iterrows():
-        for solvent_column in ['Solvent_A', 'Solvent_B']: # iterate through the solvent columns
+        for solvent_column in [column_solvent_A, column_solvent_B]: # iterate through the solvent columns
             solvent_name = row[solvent_column].lower()
             
             if '/' in solvent_name or '%' in solvent_name or '(' in solvent_name or ')' in solvent_name: # if there is a mixture of solvents, take out the entire row
@@ -195,7 +195,7 @@ def clean_smiles(df: pd.DataFrame, column_name: str):
 
 
 
-def are_enantiomers(smi1, smi2):
+def are_enantiomers(smi1: str, smi2: str):
     """
     Function that checks if two molecules are enantiomers. Credits to: https://github.com/rdkit/rdkit/discussions/7169 for the inspiration with the swapping of the "@" and "@@" in the SMILES strings.
 
@@ -236,7 +236,7 @@ def are_enantiomers(smi1, smi2):
     return False, None
 
 
-def get_maccs(smiles):
+def get_maccs(smiles: str):
     """
     Generate MACCS keys for a molecule from its SMILES string.
     
@@ -250,7 +250,7 @@ def get_maccs(smiles):
     return np.array([int(x) for x in list(maccs.ToBitString())])  # Convert MACCS keys to numpy array
 
 
-def get_solvent_features(solvent_A, solvent_B, percent_A, solvents):
+def get_solvent_features(solvent_A: str, solvent_B: str, percent_A: float, solvents: list):
     """
     Generate solvent features for a given solvent combination.
     
@@ -273,7 +273,7 @@ def get_solvent_features(solvent_A, solvent_B, percent_A, solvents):
         solvent_feature[solvent_B_index] = percent_B
     return solvent_feature
 
-def get_rdkit_descriptors(smiles):
+def get_rdkit_descriptors(smiles: str):
     """
     Generate RDKit descriptors for a molecule from its SMILES string.
     
@@ -288,7 +288,7 @@ def get_rdkit_descriptors(smiles):
                      Descriptors.NumHDonors(mol), Descriptors.NumHAcceptors(mol)])
 
     
-def process_input(smiles, solvent_A, solvent_B, percent_A):
+def process_input(smiles: str, solvent_A: str, solvent_B: str, percent_A: float):
     """
     Process the input data into a feature matrix.
     
